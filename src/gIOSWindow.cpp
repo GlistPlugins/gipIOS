@@ -23,12 +23,24 @@ gIOSWindow::~gIOSWindow() {
 
 void gIOSWindow::initialize(int width, int height, int windowMode, bool isResizable)
 {
-    gBaseWindow::initialize(width, height, windowmode, isResizable);
+    // windowMode, the parameter - not the windowmode member, which still holds
+    // its G_WINDOWMODE_NONE default at this point.
+    gBaseWindow::initialize(width, height, windowMode, isResizable);
 }
 
 bool gIOSWindow::getShouldClose()
 {
     return getIsTerminating();
+}
+
+void gIOSWindow::showKeyboard()
+{
+    showIOSKeyboard();
+}
+
+void gIOSWindow::hideKeyboard()
+{
+    hideIOSKeyboard();
 }
 
 gIOSWindow* gIOSWindow::getWindow()

@@ -39,118 +39,50 @@ static bool g_IsTerminating = false;
     g_IsTerminating = true;
 }
 
-- (void)touchesBegan:(NSSet<UITouch*> *)touches withEvent:(nullable UIEvent *)event
+// Every touch used to be written into slot 0 of a count-sized array while the
+// fired event still claimed count inputs, so anything past the first slot was
+// read uninitialized on multi-touch. One event per touch with an honest count
+// of 1 keeps the single-touch behaviour and closes that hole. The inputs are
+// only borrowed for the duration of callEvent; the handlers copy what they keep.
+static void fireTouchSet(NSSet<UITouch*>* touches, ActionType actiontype)
 {
-    NSArray<UITouch*>* allTouches = [touches allObjects];
-    
+    UIView* view = getView();
+    // locationInView reports points; the engine works in the drawable's pixel
+    // space (the same convention as the Android surface), so scale up here.
+    CGFloat scale = view.contentScaleFactor;
     int fingerid = 0;
-    int count = [allTouches count];
-    
-    TouchInput* touchinputs = new TouchInput[count];
-    
-    for (UITouch *touch in allTouches) {
-        CGPoint point = [touch locationInView: getView()];
-        
+    for (UITouch* touch in touches) {
+        CGPoint point = [touch locationInView: view];
+
         TouchInput touchinput;
         touchinput.type = correctTouchTypeForGlist(touch.type);
         touchinput.fingerid = fingerid;
         touchinput.pointerindex = 0;
-        touchinput.x = point.x;
-        touchinput.y = point.y;
-        
-        touchinputs[0] = touchinput;
-        
-        fireEvent<gTouchEvent>(count, touchinputs, 0, ACTIONTYPE_DOWN);
-        
+        touchinput.x = static_cast<int>(point.x * scale);
+        touchinput.y = static_cast<int>(point.y * scale);
+
+        fireEvent<gTouchEvent>(1, &touchinput, 0, actiontype);
+
         fingerid++;
     }
-    
-    delete[] touchinputs;
+}
+
+- (void)touchesBegan:(NSSet<UITouch*> *)touches withEvent:(nullable UIEvent *)event
+{
+    fireTouchSet(touches, ACTIONTYPE_DOWN);
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event
 {
-    NSArray<UITouch*>* allTouches = [touches allObjects];
-    
-    int fingerid = 0;
-    int count = [allTouches count];
-    
-    TouchInput* touchinputs = new TouchInput[count];
-    
-    for (UITouch *touch in allTouches) {
-        CGPoint point = [touch locationInView: getView()];
-        
-        TouchInput touchinput;
-        touchinput.type = correctTouchTypeForGlist(touch.type);
-        touchinput.fingerid = fingerid;
-        touchinput.pointerindex = 0;
-        touchinput.x = point.x;
-        touchinput.y = point.y;
-        
-        touchinputs[0] = touchinput;
-        
-        fireEvent<gTouchEvent>(count, touchinputs, 0, ACTIONTYPE_MOVE);
-        
-        fingerid++;
-    }
-    
-    delete[] touchinputs;
+    fireTouchSet(touches, ACTIONTYPE_MOVE);
 }
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event
 {
-    NSArray<UITouch*>* allTouches = [touches allObjects];
-    
-    int fingerid = 0;
-    int count = [allTouches count];
-    
-    TouchInput* touchinputs = new TouchInput[count];
-    
-    for (UITouch *touch in allTouches) {
-        CGPoint point = [touch locationInView: getView()];
-        
-        TouchInput touchinput;
-        touchinput.type = correctTouchTypeForGlist(touch.type);
-        touchinput.fingerid = fingerid;
-        touchinput.pointerindex = 0;
-        touchinput.x = point.x;
-        touchinput.y = point.y;
-        
-        touchinputs[0] = touchinput;
-        
-        fireEvent<gTouchEvent>(count, touchinputs, 0, ACTIONTYPE_UP);
-        
-        fingerid++;
-    }
-    
-    delete[] touchinputs;
+    fireTouchSet(touches, ACTIONTYPE_UP);
 }
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event
 {
-    NSArray<UITouch*>* allTouches = [touches allObjects];
-    
-    int fingerid = 0;
-    int count = [allTouches count];
-    
-    TouchInput* touchinputs = new TouchInput[count];
-    
-    for (UITouch *touch in allTouches) {
-        CGPoint point = [touch locationInView: getView()];
-        
-        TouchInput touchinput;
-        touchinput.type = correctTouchTypeForGlist(touch.type);
-        touchinput.fingerid = fingerid;
-        touchinput.pointerindex = 0;
-        touchinput.x = point.x;
-        touchinput.y = point.y;
-        
-        touchinputs[0] = touchinput;
-        
-        fireEvent<gTouchEvent>(count, touchinputs, 0, ACTIONTYPE_UP);
-        
-        fingerid++;
-    }
-    
-    delete[] touchinputs;
+    fireTouchSet(touches, ACTIONTYPE_UP);
 }
 
 @end

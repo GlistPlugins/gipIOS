@@ -4,6 +4,8 @@
 <dict>
 	<key>UISupportedInterfaceOrientations~iphone</key>
 	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 	</array>
@@ -37,5 +39,7 @@
 	<string></string>
 	<key>UIMainStoryboardFile</key>
 	<string>GlistApp</string>
+	<key>UILaunchScreen</key>
+	<dict/>
 </dict>
 </plist>

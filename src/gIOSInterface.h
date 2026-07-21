@@ -24,6 +24,10 @@ typedef struct ViewBounds
 // Implementation in gIOSViewController.mm
 ViewBounds getViewBounds();
 
+// Implementation in gIOSViewController.mm
+void showIOSKeyboard();
+void hideIOSKeyboard();
+
 // Implementation in gIOSAppDelegate.mm
 bool getIsTerminating();
 
@@ -33,8 +37,14 @@ template<typename T, typename... Args>
 void fireEvent(Args&&... args)
 {
     T event(std::forward<Args>(args)...);
-    
+
+    // UIKit lifecycle callbacks (applicationDidBecomeActive in particular) can
+    // arrive before the first frame has created the engine window; firing into
+    // a null window crashed there.
     auto* window = gIOSWindow::getWindow();
+    if(!window) {
+        return;
+    }
     window->callEvent(event);
 }
 

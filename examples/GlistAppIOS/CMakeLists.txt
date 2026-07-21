@@ -87,6 +87,27 @@ set(TOP_DIR ${APP_DIR}/../..)
 set(MAIN_DIR ${TOP_DIR}/GlistEngine)
 set(ENGINE_DIR ${MAIN_DIR}/engine)
 
+if(IOS)
+	# GlistShaderToHeader runs on the build host while the headers are being
+	# generated; left to the engine, the iOS cross-build compiles it for
+	# iOS where the host cannot execute it. Build it once for macOS here and
+	# hand the path over - the engine skips its own tool target when
+	# SHADERTOHEADER_EXEC_PATH is already defined.
+	set(HOST_SHADERTOHEADER "${CMAKE_BINARY_DIR}/host-tools/GlistShaderToHeader")
+	if(NOT EXISTS ${HOST_SHADERTOHEADER})
+		file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/host-tools")
+		execute_process(
+			COMMAND xcrun --sdk macosx clang++ -std=c++17 -O2
+				${ENGINE_DIR}/tools/ShaderToHeader.cpp -o ${HOST_SHADERTOHEADER}
+			RESULT_VARIABLE HOST_SHADERTOHEADER_RESULT
+		)
+		if(NOT HOST_SHADERTOHEADER_RESULT EQUAL 0)
+			message(FATAL_ERROR "Failed to build the host GlistShaderToHeader tool")
+		endif()
+	endif()
+	set(SHADERTOHEADER_EXEC_PATH ${HOST_SHADERTOHEADER})
+endif()
+
 if(APPLE)
 	add_subdirectory(${ENGINE_DIR} ./_build)
 else()
@@ -99,11 +120,13 @@ set(GlistApp_SOURCES
 		${APP_DIR}/src/main.cpp
 		${APP_DIR}/src/gApp.cpp
 		${APP_DIR}/src/gCanvas.cpp
+		${APP_DIR}/src/gScrollTestScenario.cpp
 )
 
 set(GlistApp_HEADERS
 		${APP_DIR}/src/gApp.h
 		${APP_DIR}/src/gCanvas.h
+		${APP_DIR}/src/gScrollTestScenario.h
 )
 
 add_executable(${APP_NAME}

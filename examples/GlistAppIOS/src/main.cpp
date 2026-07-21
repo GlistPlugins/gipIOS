@@ -22,7 +22,7 @@
 
 int main(int argc, char **argv) {
 
-	gStartEngine(new gApp(), "GlistApp", gBaseWindow::WINDOWMODE_APP, 1280, 720);
+	gStartEngine(new gApp(), "GlistApp", gBaseWindow::WINDOWMODE_GUIAPP, 720, 1280);
 
 	return 0;
 }

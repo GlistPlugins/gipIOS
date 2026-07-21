@@ -17,7 +17,10 @@ public:
     
     void initialize(int width, int height, int windowMode, bool isResizable) override;
     bool getShouldClose() override;
-    
+
+    void showKeyboard() override;
+    void hideKeyboard() override;
+
     static gIOSWindow* getWindow();
     
     // We do not handle update and close methods here, as they are controlled

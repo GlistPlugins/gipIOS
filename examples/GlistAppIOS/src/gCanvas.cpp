@@ -7,6 +7,7 @@
 
 
 #include "gCanvas.h"
+#include "gScrollTestScenario.h"
 
 
 gCanvas::gCanvas(gApp* root) : gIOSCanvas(root) {
@@ -17,6 +18,8 @@ gCanvas::~gCanvas() {
 }
 
 void gCanvas::setup() {
+	gLogi("gCanvas") << "setup";
+	gScrollTestScenario::build(root);
 }
 
 void gCanvas::update() {
@@ -26,8 +29,16 @@ void gCanvas::draw() {
 
 }
 
-void gCanvas::windowResized(int w, int h) {
+void gCanvas::onGuiEvent(int guiObjectId, int eventType, std::string value1, std::string value2) {
+	gScrollTestScenario::onGuiEvent(guiObjectId, eventType);
+}
 
+void gCanvas::deviceOrientationChanged(DeviceOrientation deviceorientation) {
+	gLogi("gCanvas") << "orientation: " << deviceorientation;
+}
+
+void gCanvas::windowResized(int w, int h) {
+	gLogi("gCanvas") << "windowResized: " << w << "x" << h;
 }
 
 void gCanvas::showNotify() {

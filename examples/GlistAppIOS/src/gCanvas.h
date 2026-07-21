@@ -22,6 +22,9 @@ public:
 	void update();
 	void draw();
 
+	void onGuiEvent(int guiObjectId, int eventType, std::string value1 = "", std::string value2 = "");
+	void deviceOrientationChanged(DeviceOrientation deviceorientation);
+
 	void windowResized(int w, int h);
     void touchMoved(int x, int y, int fingerId);
     void touchPressed(int x, int y, int fingerId);
