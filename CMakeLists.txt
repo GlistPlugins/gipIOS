@@ -106,3 +106,9 @@ list(APPEND IOS_PLUGIN_LINKLIBS
 	libcurl
 	z
 )
+
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+	set(SHADERTOHEADER_EXEC_PATH "${PLUGIN_DIR}/tools/GlistShaderToHeader-macos-universal")
+else()
+	message(FATAL_ERROR "iOS builds require a macOS host")
+endif()
