@@ -16,4 +16,4 @@ The plugin also ships a prebuilt host copy of the engine's `ShaderToHeader` tool
 
 ## Building
 
-iOS builds are driven from the app project, not from this plugin. See [GlistApp's `_macos/README.md`](https://github.com/glistengine/glistapp/blob/main/_macos/README.md) for the build, signing and troubleshooting steps.
+iOS builds are driven from the app project, not from this plugin. See [GlistApp's `_apple/README.md`](https://github.com/glistengine/glistapp/blob/main/_apple/README.md) for the build, signing and troubleshooting steps.
