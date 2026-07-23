@@ -34,7 +34,6 @@ set(IOS_PLUGIN_LIBS_DIR ${IOS_PLUGIN_DIR}/libs)
 
 ##### PLUGIN SOURCES #####
 list(APPEND IOS_PLUGIN_SRCS
-	${IOS_PLUGIN_LIBS_DIR}/sqlite3.c
 	${IOS_PLUGIN_DIR}/src/gIOSMain.mm
 	${IOS_PLUGIN_DIR}/src/gIOSWindow.cpp
 	${IOS_PLUGIN_DIR}/src/gIOSApp.cpp
