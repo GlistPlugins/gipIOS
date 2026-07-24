@@ -1,36 +1,19 @@
 # gipIOS
 
-1. If you do not have Xcode, download and install before continuing the guide.
+iOS platform plugin for [GlistEngine](https://github.com/GlistEngine/GlistEngine). It provides the iOS windowing, app lifecycle and prebuilt dependencies (assimp, freetype, curl, openssl) needed to build a GlistEngine app for iOS.
 
-2. After cloning this plugin under `~/dev/glist/glistplugins`, go to GlistApp's directory and open "generate_glistapp_xcode.sh" in a text editor.
+## Setup
 
-3. There is a few exposed variables available for change. The 2 most important being the `DEPLOYMENT VERSION` and the `PLATFORM`.
-    - `DEPLOYMENT_VERSION` dictates the minimum iOS version the app can run at. However, due to Xcode's newer versions, only iOS version 11.0 and upwards can be run and built. We on the other hand, recommend using the 13.0 version.
-    - `PLATFORM` can have 2 values. `OS64` means you are building the app for your physical phone. `SIMULATOR64COMBINED` means you are building for the iOS simulator on your Mac device.
+Clone this plugin under `glist/glistplugins`, next to the engine:
 
-4. After you have made appropriate changes on the bash file, you can move on to the scripts directory inside GlistApp. There, you can find 3 variables; `GLIST_IOS_DEVELOPMENT_TEAM`, `GLIST_IOS_PRODUCT_BUNDLE_IDENTIFIER` and `GLIST_IOS_PRODUCT_NAME`.
-    - You have to write down your Apple Development Team ID next to `GLIST_IOS_DEVELOPMENT_TEAM`,
-    - Your app's product bundle identifier next to`GLIST_IOS_PRODUCT_BUNDLE_IDENTIFIER`.
-    - And your App's desired name next to `GLIST_IOS_PRODUCT_NAME`.
+- `glist/GlistEngine`
+- `glist/glistplugins/gipIOS`
+- `glist/myglistapps/GlistApp`
 
-5. After everything is to your liking, you can run the "generate_glistapp_xcode.sh" with the following command in commandline
+That's all, GlistEngine adds `gipIOS` automatically for iOS builds, so you don't need to list it in `PLUGINS`.
 
-    `sh generate_glistapp_xcode.sh`
+The plugin also ships a prebuilt host copy of the engine's `ShaderToHeader` tool in `tools/`, which the app's `CMakeLists.txt` uses so shader headers can be generated while cross-compiling for iOS.
 
-6. When Xcode opens the project, click on ALL_BUILD where it says `ALL_BUILD > My Mac` at the top center of the Xcode screen and select `GlistApp`.
+## Building
 
-7. Click on the run button at the top-left of the screen.
-
-##### Troubleshooting and FAQ
-
-- Receiving linking/linker errors:
-
-Most of the linker errors are usually caused by selecting the wrong platform. that is, selecting SIMULATOR64COMBINED for usage in your phone and vice-versa. Please select the correct platform for your usage.
-
-- Even after I changed the platform, the program still experiences linking errors!
-
-You have to remove the old _build folder in order for changes to take effect in your new Xcode project created entirely with your new settings. This is for almost everything you change inside `generate_glistapp_xcode.sh` file.
-
-- Why does my files that I created inside Xcode doesn't get included in the compilation?
-
-This is because how CMake creates Xcode projects and how Xcode handles files. Xcode has its own file management and compilation system in which you have to supply your source files into a type of list. To avoid doing that, create your new source and header files outside of Xcode (either from your terminal or the "Finder" program), then add these files to the `GlistApp_SOURCES` and `GlistApp_HEADERS` variables inside CMakeLists.txt. Then you have to re-run (Step.5) the bash file.
+iOS builds are driven from the app project, not from this plugin. See [GlistApp's `_apple/README.md`](https://github.com/glistengine/glistapp/blob/main/_apple/README.md) for the build, signing and troubleshooting steps.

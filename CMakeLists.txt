@@ -34,7 +34,6 @@ set(IOS_PLUGIN_LIBS_DIR ${IOS_PLUGIN_DIR}/libs)
 
 ##### PLUGIN SOURCES #####
 list(APPEND IOS_PLUGIN_SRCS
-	${IOS_PLUGIN_LIBS_DIR}/sqlite3.c
 	${IOS_PLUGIN_DIR}/src/gIOSMain.mm
 	${IOS_PLUGIN_DIR}/src/gIOSWindow.cpp
 	${IOS_PLUGIN_DIR}/src/gIOSApp.cpp
@@ -62,20 +61,15 @@ list(APPEND IOS_PLUGIN_INCLUDES
 			${IOS_PLUGIN_DIR}/src
 			${IOS_PLUGIN_LIBS_DIR}/include
 			${IOS_PLUGIN_LIBS_DIR}/include/freetype2
-			${BREW_PATH}/llvm/include/c++/v1
 			#/Library/Developer/CommandLineTools/usr/include/c++/v1
 )
 
-add_library(fmod      STATIC IMPORTED)
-add_library(fmodL     STATIC IMPORTED)
 add_library(assimp    STATIC IMPORTED)
 add_library(freetype  STATIC IMPORTED)
 add_library(libssl    STATIC IMPORTED)
 add_library(libcrypto STATIC IMPORTED)
 add_library(libcurl   STATIC IMPORTED)
 
-set_target_properties(fmod      PROPERTIES IMPORTED_LOCATION ${IOS_PLUGIN_LIBS_DIR}/lib/ios/${IOS_PLATFORM}/libfmod.a)
-set_target_properties(fmodL     PROPERTIES IMPORTED_LOCATION ${IOS_PLUGIN_LIBS_DIR}/lib/ios/${IOS_PLATFORM}/libfmodL.a)
 set_target_properties(assimp    PROPERTIES IMPORTED_LOCATION ${IOS_PLUGIN_LIBS_DIR}/lib/ios/${IOS_PLATFORM}/libassimp.a)
 set_target_properties(freetype  PROPERTIES IMPORTED_LOCATION ${IOS_PLUGIN_LIBS_DIR}/lib/ios/${IOS_PLATFORM}/libfreetype.a)
 set_target_properties(libssl    PROPERTIES IMPORTED_LOCATION ${IOS_PLUGIN_LIBS_DIR}/lib/ios/${IOS_PLATFORM}/libssl.a)
@@ -97,8 +91,6 @@ add_apple_library(AVFoundation)
 
 ##### PLUGIN DEPENDENCY LINKING (IF ANY) #####					
 list(APPEND IOS_PLUGIN_LINKLIBS
-	fmod
-	fmodL
 	assimp
 	freetype
 	libssl
@@ -108,7 +100,7 @@ list(APPEND IOS_PLUGIN_LINKLIBS
 )
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
-	set(SHADERTOHEADER_EXEC_PATH "${PLUGIN_DIR}/tools/GlistShaderToHeader-macos-universal")
+	set(SHADERTOHEADER_EXEC_PATH "${IOS_PLUGIN_DIR}/tools/GlistShaderToHeader-macos-universal")
 else()
 	message(FATAL_ERROR "iOS builds require a macOS host")
 endif()
