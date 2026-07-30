@@ -27,10 +27,13 @@ static ViewBounds viewBounds = {0, 0};
     
     view.context = m_Context;
     self.delegate = self;
+    self.preferredFramesPerSecond = 60;
+    self.paused = NO;
+    view.enableSetNeedsDisplay = NO;
     
     [EAGLContext setCurrentContext:view.context];
-    
-    viewBounds = {static_cast<float>(view.bounds.size.width), static_cast<float>(view.bounds.size.height)};
+    CGFloat scale = view.contentScaleFactor;
+    viewBounds = {static_cast<float>(view.bounds.size.width * scale), static_cast<float>(view.bounds.size.height * scale)};
     
     mainView = view;
 }
@@ -54,7 +57,7 @@ static ViewBounds viewBounds = {0, 0};
         
         fbo_initialized = true;
     }
-    
+    glViewport(0, 0, (GLsizei)view.drawableWidth, (GLsizei)view.drawableHeight);
     loop();
 }
 

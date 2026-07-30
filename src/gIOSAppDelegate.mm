@@ -50,13 +50,14 @@ static bool g_IsTerminating = false;
     
     for (UITouch *touch in allTouches) {
         CGPoint point = [touch locationInView: getView()];
+        CGFloat scale = getView().contentScaleFactor;
         
         TouchInput touchinput;
         touchinput.type = correctTouchTypeForGlist(touch.type);
         touchinput.fingerid = fingerid;
         touchinput.pointerindex = 0;
-        touchinput.x = point.x;
-        touchinput.y = point.y;
+        touchinput.x = point.x * scale;
+        touchinput.y = point.y * scale;
         
         touchinputs[0] = touchinput;
         
@@ -79,13 +80,13 @@ static bool g_IsTerminating = false;
     
     for (UITouch *touch in allTouches) {
         CGPoint point = [touch locationInView: getView()];
-        
+        CGFloat scale = getView().contentScaleFactor;
         TouchInput touchinput;
         touchinput.type = correctTouchTypeForGlist(touch.type);
         touchinput.fingerid = fingerid;
         touchinput.pointerindex = 0;
-        touchinput.x = point.x;
-        touchinput.y = point.y;
+        touchinput.x = point.x * scale;
+        touchinput.y = point.y * scale;
         
         touchinputs[0] = touchinput;
         
@@ -107,13 +108,13 @@ static bool g_IsTerminating = false;
     
     for (UITouch *touch in allTouches) {
         CGPoint point = [touch locationInView: getView()];
-        
+        CGFloat scale = getView().contentScaleFactor;
         TouchInput touchinput;
         touchinput.type = correctTouchTypeForGlist(touch.type);
         touchinput.fingerid = fingerid;
         touchinput.pointerindex = 0;
-        touchinput.x = point.x;
-        touchinput.y = point.y;
+        touchinput.x = point.x * scale;
+        touchinput.y = point.y * scale;
         
         touchinputs[0] = touchinput;
         
@@ -135,13 +136,13 @@ static bool g_IsTerminating = false;
     
     for (UITouch *touch in allTouches) {
         CGPoint point = [touch locationInView: getView()];
-        
+        CGFloat scale = getView().contentScaleFactor;
         TouchInput touchinput;
         touchinput.type = correctTouchTypeForGlist(touch.type);
         touchinput.fingerid = fingerid;
         touchinput.pointerindex = 0;
-        touchinput.x = point.x;
-        touchinput.y = point.y;
+        touchinput.x = point.x * scale;
+        touchinput.y = point.y * scale;
         
         touchinputs[0] = touchinput;
         
