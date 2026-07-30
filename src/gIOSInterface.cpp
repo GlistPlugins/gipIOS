@@ -7,6 +7,8 @@ struct AppParameters
 {
     std::string appName;
     gBaseApp* baseApp;
+    int unitWidth;
+    int unitHeight;
     int width;
     int height;
     int windowMode;
@@ -20,22 +22,22 @@ AppParameters params{};
 
 void init(void* baseApp, const char* appName, int windowMode, int unitWidth, int unitHeight, int screenScaling, int width, int height, bool isResizable)
 {
-    params = AppParameters{std::string(appName), (gBaseApp*)baseApp, width, height, windowMode, screenScaling, isResizable, G_LOOPMODE_NORMAL};
+    params = AppParameters{std::string(appName), (gBaseApp*)baseApp, unitWidth, unitHeight, width, height, windowMode, screenScaling, isResizable, G_LOOPMODE_NORMAL};
 }
 void setup()
 {
     ViewBounds bounds = getViewBounds();
     int unitwidth = static_cast<int>(bounds.width);
     int unitheight = static_cast<int>(bounds.height);
-    appmanager = new gAppManager(params.appName, params.baseApp, params.width, params.height, params.windowMode, unitwidth, unitheight, params.screenScaling, params.isResizable, params.loopmode);
+    appmanager = new gAppManager(params.appName, params.baseApp, unitwidth, unitheight, params.windowMode, params.unitWidth, params.unitHeight, params.screenScaling, params.isResizable, params.loopmode);
     
     appmanager->initialize();
     appmanager->setup();
+    appmanager->loop();
 }
 
 void loop()
 {
-    appmanager->loop();
     appmanager->iosLoop();
 }
 
