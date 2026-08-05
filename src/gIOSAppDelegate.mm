@@ -4,10 +4,96 @@
 
 #import "gIOSViewController.h"
 #import "gIOSInterface.h"
-#import "gIOSViewController.h"
 #import "gIOSWindow.h"
 
+#include <unordered_map>
+
 static bool g_IsTerminating = false;
+static std::unordered_map<const void*, int> activeTouchIds;
+
+
+InputType correctTouchTypeForGlist(UITouchType type) {
+    switch(type) {
+        case UITouchTypeDirect:
+            return INPUTTYPE_FINGER;
+
+        case UITouchTypePencil:
+            return INPUTTYPE_STYLUS;
+
+        default:
+            return INPUTTYPE_UNKNOWN;
+    }
+}
+
+
+static const void* getTouchKey(UITouch* touch) {
+    return (__bridge const void*)touch;
+}
+
+
+static int findTouchId(UITouch* touch) {
+    const void* key = getTouchKey(touch);
+    const auto it = activeTouchIds.find(key);
+
+    if(it == activeTouchIds.end()) {
+        return -1;
+    }
+
+    return it->second;
+}
+
+
+static int createTouchId(UITouch* touch) {
+    const int existingId = findTouchId(touch);
+
+    if(existingId >= 0) {
+        return existingId;
+    }
+
+    for(int candidateId = 0; candidateId < 16; ++candidateId) {
+        bool idAlreadyUsed = false;
+
+        for(const auto& entry : activeTouchIds) {
+            if(entry.second == candidateId) {
+                idAlreadyUsed = true;
+                break;
+            }
+        }
+
+        if(!idAlreadyUsed) {
+            activeTouchIds[getTouchKey(touch)] = candidateId;
+            return candidateId;
+        }
+    }
+
+    return -1;
+}
+
+
+static void removeTouchId(UITouch* touch) {
+    activeTouchIds.erase(getTouchKey(touch));
+}
+
+static void sendTouchEvent(UITouch* touch, int fingerId, ActionType action) {
+    UIView* view = getView();
+
+    if(view == nil || touch == nil || fingerId < 0) {
+        return;
+    }
+
+    const CGPoint point = [touch locationInView:view];
+    const CGFloat scale = view.contentScaleFactor;
+
+    TouchInput input{};
+    input.type = correctTouchTypeForGlist(touch.type);
+    input.fingerid = fingerId;
+    input.pointerindex = 0;
+    input.x = static_cast<int>(point.x * scale);
+    input.y = static_cast<int>(point.y * scale);
+
+    fireEvent<gTouchEvent>(1, &input, 0, action);
+}
+
 
 @implementation gIOSAppDelegate
 
@@ -26,6 +112,7 @@ static bool g_IsTerminating = false;
 
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
+    activeTouchIds.clear();
     fireEvent<gAppPauseEvent>();
 }
 
@@ -36,122 +123,75 @@ static bool g_IsTerminating = false;
 
 
 - (void)applicationWillTerminate:(UIApplication *)application {
+    activeTouchIds.clear();
     g_IsTerminating = true;
 }
 
 - (void)touchesBegan:(NSSet<UITouch*> *)touches withEvent:(nullable UIEvent *)event
 {
-    NSArray<UITouch*>* allTouches = [touches allObjects];
-    
-    int fingerid = 0;
-    int count = [allTouches count];
-    
-    TouchInput* touchinputs = new TouchInput[count];
-    
-    for (UITouch *touch in allTouches) {
-        CGPoint point = [touch locationInView: getView()];
-        CGFloat scale = getView().contentScaleFactor;
-        
-        TouchInput touchinput;
-        touchinput.type = correctTouchTypeForGlist(touch.type);
-        touchinput.fingerid = fingerid;
-        touchinput.pointerindex = 0;
-        touchinput.x = point.x * scale;
-        touchinput.y = point.y * scale;
-        
-        touchinputs[0] = touchinput;
-        
-        fireEvent<gTouchEvent>(count, touchinputs, 0, ACTIONTYPE_DOWN);
-        
-        fingerid++;
+    for(UITouch* touch in touches) {
+        const int fingerId = createTouchId(touch);
+
+        if(fingerId < 0) {
+            continue;
+        }
+
+        sendTouchEvent(touch, fingerId, ACTIONTYPE_DOWN);
     }
-    
-    delete[] touchinputs;
 }
 
-- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event
-{
-    NSArray<UITouch*>* allTouches = [touches allObjects];
-    
-    int fingerid = 0;
-    int count = [allTouches count];
-    
-    TouchInput* touchinputs = new TouchInput[count];
-    
-    for (UITouch *touch in allTouches) {
-        CGPoint point = [touch locationInView: getView()];
-        CGFloat scale = getView().contentScaleFactor;
-        TouchInput touchinput;
-        touchinput.type = correctTouchTypeForGlist(touch.type);
-        touchinput.fingerid = fingerid;
-        touchinput.pointerindex = 0;
-        touchinput.x = point.x * scale;
-        touchinput.y = point.y * scale;
-        
-        touchinputs[0] = touchinput;
-        
-        fireEvent<gTouchEvent>(count, touchinputs, 0, ACTIONTYPE_MOVE);
-        
-        fingerid++;
+
+- (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(nullable UIEvent*)event {
+    for(UITouch* touch in touches) {
+        int fingerId = findTouchId(touch);
+
+        /*
+         * Normally the touch already has an ID. This fallback
+         * prevents an unusual iOS event from losing the touch.
+         */
+        if(fingerId < 0) {
+            fingerId = createTouchId(touch);
+        }
+
+        if(fingerId < 0) {
+            continue;
+        }
+
+        sendTouchEvent(touch, fingerId, ACTIONTYPE_MOVE);
     }
-    
-    delete[] touchinputs;
 }
-- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event
-{
-    NSArray<UITouch*>* allTouches = [touches allObjects];
-    
-    int fingerid = 0;
-    int count = [allTouches count];
-    
-    TouchInput* touchinputs = new TouchInput[count];
-    
-    for (UITouch *touch in allTouches) {
-        CGPoint point = [touch locationInView: getView()];
-        CGFloat scale = getView().contentScaleFactor;
-        TouchInput touchinput;
-        touchinput.type = correctTouchTypeForGlist(touch.type);
-        touchinput.fingerid = fingerid;
-        touchinput.pointerindex = 0;
-        touchinput.x = point.x * scale;
-        touchinput.y = point.y * scale;
-        
-        touchinputs[0] = touchinput;
-        
-        fireEvent<gTouchEvent>(count, touchinputs, 0, ACTIONTYPE_UP);
-        
-        fingerid++;
+
+
+- (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(nullable UIEvent*)event {
+    for(UITouch* touch in touches) {
+        const int fingerId = findTouchId(touch);
+
+        if(fingerId < 0) {
+            continue;
+        }
+
+        sendTouchEvent(touch, fingerId, ACTIONTYPE_UP);
+        removeTouchId(touch);
     }
-    
-    delete[] touchinputs;
 }
-- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event
-{
-    NSArray<UITouch*>* allTouches = [touches allObjects];
-    
-    int fingerid = 0;
-    int count = [allTouches count];
-    
-    TouchInput* touchinputs = new TouchInput[count];
-    
-    for (UITouch *touch in allTouches) {
-        CGPoint point = [touch locationInView: getView()];
-        CGFloat scale = getView().contentScaleFactor;
-        TouchInput touchinput;
-        touchinput.type = correctTouchTypeForGlist(touch.type);
-        touchinput.fingerid = fingerid;
-        touchinput.pointerindex = 0;
-        touchinput.x = point.x * scale;
-        touchinput.y = point.y * scale;
-        
-        touchinputs[0] = touchinput;
-        
-        fireEvent<gTouchEvent>(count, touchinputs, 0, ACTIONTYPE_UP);
-        
-        fingerid++;
+
+
+- (void)touchesCancelled:(NSSet<UITouch*>*)touches withEvent:(nullable UIEvent*)event {
+    for(UITouch* touch in touches) {
+        const int fingerId = findTouchId(touch);
+
+        if(fingerId < 0) {
+            continue;
+        }
+
+        /*
+         * Treat a cancelled touch as released so joystick,
+         * firing or camera controls cannot remain stuck.
+         */
+        sendTouchEvent(touch, fingerId, ACTIONTYPE_UP);
+
+        removeTouchId(touch);
     }
-    
-    delete[] touchinputs;
 }
 
 @end
@@ -159,13 +199,4 @@ static bool g_IsTerminating = false;
 bool getIsTerminating()
 {
     return g_IsTerminating;
-}
-
-InputType correctTouchTypeForGlist(UITouchType type)
-{
-    switch (type) {
-        case UITouchTypeDirect: return INPUTTYPE_FINGER;
-        case UITouchTypePencil: return INPUTTYPE_STYLUS;
-        default:                return INPUTTYPE_UNKNOWN;
-    }
 }
