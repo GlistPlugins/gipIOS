@@ -10,6 +10,6 @@
 
 #include <iosfwd>
 
-int ios_main(void* baseApp, const char* appName, int windowMode, int unitWidth, int unitHeight, int screenScaling, int width, int height, bool isResizable);
+int ios_main(void* baseApp, const char* appName, int windowMode, int unitWidth, int unitHeight, int screenScaling, int width, int height, bool isResizable, int renderEngine);
 
 #endif /* G_IOSMAIN_H */

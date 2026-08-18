@@ -19,7 +19,9 @@ get_property(IOS_PLATFORM SOURCE ${CMAKE_TOOLCHAIN_FILE} PROPERTY PLATFORM)
 
 if(${PLATFORM} STREQUAL "OS64")
     set(IOS_PLATFORM os)
-elseif(${PLATFORM} STREQUAL "SIMULATOR64COMBINED")
+elseif(${PLATFORM} STREQUAL "SIMULATOR64COMBINED" OR
+       ${PLATFORM} STREQUAL "SIMULATORARM64" OR
+       ${PLATFORM} STREQUAL "SIMULATOR64")
     set(IOS_PLATFORM simulator)
 endif()
 
@@ -31,6 +33,32 @@ set(pluginname gipIOS)
 set(IOS_PLUGIN_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 set(IOS_PLUGIN_LIBS_DIR ${IOS_PLUGIN_DIR}/libs)
+
+# MoltenVK is supplied by the application/toolchain, not vendored by this plugin.
+# Explicit cache values are preferred; VULKAN_SDK is used as a convenience fallback.
+set(GLIST_MOLTENVK_LIBRARY "" CACHE FILEPATH "Path to the matching MoltenVK library")
+set(GLIST_MOLTENVK_INCLUDE_DIR "" CACHE PATH "Directory containing vulkan/vulkan.h")
+if(NOT GLIST_MOLTENVK_INCLUDE_DIR)
+    find_path(GLIST_MOLTENVK_INCLUDE_DIR vulkan/vulkan.h
+        HINTS ENV VULKAN_SDK PATH_SUFFIXES include)
+endif()
+if(NOT GLIST_MOLTENVK_LIBRARY)
+    find_library(GLIST_MOLTENVK_LIBRARY NAMES MoltenVK
+        HINTS ENV VULKAN_SDK PATH_SUFFIXES lib lib/MoltenVK)
+endif()
+if(GLIST_MOLTENVK_LIBRARY AND GLIST_MOLTENVK_INCLUDE_DIR)
+    if(NOT TARGET MoltenVK)
+        add_library(MoltenVK UNKNOWN IMPORTED)
+        set_target_properties(MoltenVK PROPERTIES IMPORTED_LOCATION "${GLIST_MOLTENVK_LIBRARY}")
+    endif()
+    list(APPEND IOS_PLUGIN_INCLUDES "${GLIST_MOLTENVK_INCLUDE_DIR}")
+    list(APPEND IOS_PLUGIN_LINKLIBS MoltenVK)
+    set(Lib_Vulkan MoltenVK)
+    set(GLIST_IOS_HAS_VULKAN ON)
+    message(STATUS "iOS Vulkan enabled with MoltenVK: ${GLIST_MOLTENVK_LIBRARY}")
+else()
+    message(STATUS "iOS MoltenVK not configured; Vulkan backend disabled")
+endif()
 
 ##### PLUGIN SOURCES #####
 list(APPEND IOS_PLUGIN_SRCS
@@ -84,6 +112,8 @@ add_apple_library(MobileCoreServices)
 #add_apple_library(SystemConfiguration)
 add_apple_library(OpenGLES)
 add_apple_library(GLKit)
+add_apple_library(Metal)
+add_apple_library(QuartzCore)
 add_apple_library(AVFAudio)
 add_apple_library(AudioToolbox)
 add_apple_library(AVKit)

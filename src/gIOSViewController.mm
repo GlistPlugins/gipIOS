@@ -5,11 +5,13 @@
 #import <OpenGLES/EAGLDrawable.h>
 #import <OpenGLES/ES3/gl.h>
 #import <OpenGLES/EAGLIOSurface.h>
+#import <QuartzCore/CAMetalLayer.h>
 
 #import "gIOSViewController.h"
 #import "gIOSInterface.h"
 
 static UIView* mainView;
+static CAMetalLayer* mainMetalLayer;
 static ViewBounds viewBounds = {0, 0};
 
 @implementation gIOSViewController
@@ -17,6 +19,8 @@ static ViewBounds viewBounds = {0, 0};
 -(instancetype)init
 {
     self = [super init];
+    if(self) display_link = nil;
+    return self;
 }
 
 -(void) setupGL
@@ -42,9 +46,41 @@ static ViewBounds viewBounds = {0, 0};
 -(void) viewDidLoad
 {
     [super viewDidLoad];
-    [self setupGL];
+    if(isIOSVulkanRequested()) {
+        UIView* view = self.view;
+        mainMetalLayer = [CAMetalLayer layer];
+        mainMetalLayer.frame = view.bounds;
+        mainMetalLayer.contentsScale = UIScreen.mainScreen.nativeScale;
+        [view.layer addSublayer:mainMetalLayer];
+        mainView = view;
+        viewBounds = {static_cast<float>(view.bounds.size.width * mainMetalLayer.contentsScale),
+                static_cast<float>(view.bounds.size.height * mainMetalLayer.contentsScale)};
+        setup();
+        display_link = [CADisplayLink displayLinkWithTarget:self selector:@selector(drawVulkanFrame:)];
+        display_link.preferredFramesPerSecond = UIScreen.mainScreen.maximumFramesPerSecond;
+        [display_link addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+    } else {
+        [self setupGL];
+        setup();
+    }
+}
 
-    setup();
+-(void) viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    if(!mainMetalLayer) return;
+    mainMetalLayer.frame = self.view.bounds;
+    const int width = static_cast<int>(self.view.bounds.size.width * mainMetalLayer.contentsScale);
+    const int height = static_cast<int>(self.view.bounds.size.height * mainMetalLayer.contentsScale);
+    viewBounds = {static_cast<float>(width), static_cast<float>(height)};
+    gIOSWindow* window = gIOSWindow::getWindow();
+    if(window && width > 0 && height > 0) window->setSize(width, height);
+}
+
+-(void) drawVulkanFrame:(CADisplayLink*)sender
+{
+    (void)sender;
+    loop();
 }
 
 - (void) glkView:(GLKView *)view drawInRect:(CGRect)rect
@@ -71,6 +107,11 @@ static ViewBounds viewBounds = {0, 0};
 UIView* getView()
 {
     return mainView;
+}
+
+void* getIOSMetalLayer()
+{
+    return (__bridge void*)mainMetalLayer;
 }
 
 ViewBounds getViewBounds()
