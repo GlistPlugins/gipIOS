@@ -38,13 +38,23 @@ set(IOS_PLUGIN_LIBS_DIR ${IOS_PLUGIN_DIR}/libs)
 # Explicit cache values are preferred; VULKAN_SDK is used as a convenience fallback.
 set(GLIST_MOLTENVK_LIBRARY "" CACHE FILEPATH "Path to the matching MoltenVK library")
 set(GLIST_MOLTENVK_INCLUDE_DIR "" CACHE PATH "Directory containing vulkan/vulkan.h")
+if(IOS_PLATFORM STREQUAL "simulator")
+    set(GLIST_MOLTENVK_SLICE "ios-arm64_x86_64-simulator")
+else()
+    set(GLIST_MOLTENVK_SLICE "ios-arm64")
+endif()
 if(NOT GLIST_MOLTENVK_INCLUDE_DIR)
     find_path(GLIST_MOLTENVK_INCLUDE_DIR vulkan/vulkan.h
-        HINTS ENV VULKAN_SDK PATH_SUFFIXES include)
+        HINTS ENV VULKAN_SDK ENV MOLTENVK_HOME
+        PATH_SUFFIXES include MoltenVK/include)
 endif()
 if(NOT GLIST_MOLTENVK_LIBRARY)
     find_library(GLIST_MOLTENVK_LIBRARY NAMES MoltenVK
-        HINTS ENV VULKAN_SDK PATH_SUFFIXES lib lib/MoltenVK)
+        HINTS ENV VULKAN_SDK ENV MOLTENVK_HOME
+        PATH_SUFFIXES
+            lib lib/MoltenVK
+            "MoltenVK/MoltenVK.xcframework/${GLIST_MOLTENVK_SLICE}"
+            "MoltenVK.xcframework/${GLIST_MOLTENVK_SLICE}")
 endif()
 if(GLIST_MOLTENVK_LIBRARY AND GLIST_MOLTENVK_INCLUDE_DIR)
     if(NOT TARGET MoltenVK)
@@ -114,6 +124,8 @@ add_apple_library(OpenGLES)
 add_apple_library(GLKit)
 add_apple_library(Metal)
 add_apple_library(QuartzCore)
+add_apple_library(CoreGraphics)
+add_apple_library(IOSurface)
 add_apple_library(AVFAudio)
 add_apple_library(AudioToolbox)
 add_apple_library(AVKit)
