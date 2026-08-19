@@ -34,8 +34,10 @@ set(IOS_PLUGIN_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 set(IOS_PLUGIN_LIBS_DIR ${IOS_PLUGIN_DIR}/libs)
 
-# MoltenVK is supplied by the application/toolchain, not vendored by this plugin.
-# Explicit cache values are preferred; VULKAN_SDK is used as a convenience fallback.
+# MoltenVK is too large to keep in the repository, so it is fetched once per
+# machine into libs/moltenvk/<version> - see the Vulkan section of the README.
+# An explicit cache value or an installed SDK in the environment wins over it, and
+# when nothing is found the engine simply builds without the Vulkan backend.
 set(GLIST_MOLTENVK_LIBRARY "" CACHE FILEPATH "Path to the matching MoltenVK library")
 set(GLIST_MOLTENVK_INCLUDE_DIR "" CACHE PATH "Directory containing vulkan/vulkan.h")
 if(IOS_PLATFORM STREQUAL "simulator")
@@ -43,18 +45,30 @@ if(IOS_PLATFORM STREQUAL "simulator")
 else()
     set(GLIST_MOLTENVK_SLICE "ios-arm64")
 endif()
+file(GLOB GLIST_MOLTENVK_BUNDLED "${IOS_PLUGIN_LIBS_DIR}/moltenvk/*")
+list(SORT GLIST_MOLTENVK_BUNDLED)
+list(REVERSE GLIST_MOLTENVK_BUNDLED)
 if(NOT GLIST_MOLTENVK_INCLUDE_DIR)
+    # find_path does nothing while the cache entry holds a value, and the empty
+    # default above is one, so the entry has to go before the search can run. The
+    # iOS toolchain restricts the find commands to the SDK, which is why these look
+    # outside the find root as well.
+    unset(GLIST_MOLTENVK_INCLUDE_DIR CACHE)
     find_path(GLIST_MOLTENVK_INCLUDE_DIR vulkan/vulkan.h
-        HINTS ENV VULKAN_SDK ENV MOLTENVK_HOME
-        PATH_SUFFIXES include MoltenVK/include)
+        HINTS ENV VULKAN_SDK ENV MOLTENVK_HOME ${GLIST_MOLTENVK_BUNDLED}
+        PATH_SUFFIXES include MoltenVK/include
+        NO_CMAKE_FIND_ROOT_PATH)
 endif()
 if(NOT GLIST_MOLTENVK_LIBRARY)
+    unset(GLIST_MOLTENVK_LIBRARY CACHE)
     find_library(GLIST_MOLTENVK_LIBRARY NAMES MoltenVK
-        HINTS ENV VULKAN_SDK ENV MOLTENVK_HOME
+        HINTS ENV VULKAN_SDK ENV MOLTENVK_HOME ${GLIST_MOLTENVK_BUNDLED}
         PATH_SUFFIXES
+            "lib/${GLIST_MOLTENVK_SLICE}"
             lib lib/MoltenVK
             "MoltenVK/MoltenVK.xcframework/${GLIST_MOLTENVK_SLICE}"
-            "MoltenVK.xcframework/${GLIST_MOLTENVK_SLICE}")
+            "MoltenVK.xcframework/${GLIST_MOLTENVK_SLICE}"
+        NO_CMAKE_FIND_ROOT_PATH)
 endif()
 if(GLIST_MOLTENVK_LIBRARY AND GLIST_MOLTENVK_INCLUDE_DIR)
     if(NOT TARGET MoltenVK)
