@@ -26,6 +26,7 @@ static ViewBounds viewBounds = {0, 0};
     m_Context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
     
     view.context = m_Context;
+    view.multipleTouchEnabled = YES;
     self.delegate = self;
     self.preferredFramesPerSecond = 60;
     self.paused = NO;
