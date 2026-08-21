@@ -31,6 +31,9 @@ static constexpr int VIRTUAL_BUTTON_COUNT = 15;
     void setVirtualGamepadAxis(int gamepadId, int axisId, float value) override;
 
     void setVirtualGamepadButton(int gamepadId, int buttonId, bool pressed) override;
+    bool supportsVulkan() const override;
+    void getVulkanInstanceExtensions(std::vector<const char*>& extensions) const override;
+    bool createVulkanSurface(void* instance, void* surface) override;
     
     static gIOSWindow* getWindow();
     

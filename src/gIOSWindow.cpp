@@ -11,6 +11,10 @@
 #include "gIOSWindow.h"
 #include "gIOSInterface.h"
 
+#ifdef GLIST_HAS_VULKAN
+#include <vulkan/vulkan.h>
+#endif
+
 gIOSWindow* window = nullptr;
 
 gIOSWindow::gIOSWindow() : virtualgamepadconnected(false) {
@@ -32,6 +36,42 @@ void gIOSWindow::initialize(int width, int height, int windowMode, bool isResiza
 bool gIOSWindow::getShouldClose()
 {
     return getIsTerminating();
+}
+
+bool gIOSWindow::supportsVulkan() const
+{
+#ifdef GLIST_HAS_VULKAN
+    return isIOSVulkanRequested() && getIOSMetalLayer() != nullptr;
+#else
+    return false;
+#endif
+}
+
+void gIOSWindow::getVulkanInstanceExtensions(std::vector<const char*>& extensions) const
+{
+#ifdef GLIST_HAS_VULKAN
+    extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+    extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
+#else
+    (void)extensions;
+#endif
+}
+
+bool gIOSWindow::createVulkanSurface(void* instance, void* surface)
+{
+#ifdef GLIST_HAS_VULKAN
+    void* layer = getIOSMetalLayer();
+    if(layer == nullptr || instance == nullptr || surface == nullptr) return false;
+    VkMetalSurfaceCreateInfoEXT info{};
+    info.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+    info.pLayer = layer;
+    return vkCreateMetalSurfaceEXT(*static_cast<VkInstance*>(instance), &info, nullptr,
+            static_cast<VkSurfaceKHR*>(surface)) == VK_SUCCESS;
+#else
+    (void)instance;
+    (void)surface;
+    return false;
+#endif
 }
 
 gIOSWindow* gIOSWindow::getWindow()

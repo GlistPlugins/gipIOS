@@ -10,7 +10,7 @@
 
 #include "gIOSWindow.h"
 
-void init(void* baseApp, const char* appName, int windowMode, int unitWidth, int unitHeight, int screenScaling, int width, int height, bool isResizable);
+void init(void* baseApp, const char* appName, int windowMode, int unitWidth, int unitHeight, int screenScaling, int width, int height, bool isResizable, int renderEngine);
 void setup();
 void loop();
 void stop();
@@ -23,6 +23,8 @@ typedef struct ViewBounds
 
 // Implementation in gIOSViewController.mm
 ViewBounds getViewBounds();
+bool isIOSVulkanRequested();
+void* getIOSMetalLayer();
 
 // Implementation in gIOSAppDelegate.mm
 bool getIsTerminating();
